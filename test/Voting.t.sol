@@ -7,11 +7,11 @@ import "../src/Voting.sol";
 
 contract BallotBoxTest is Test {
     BallotBox public ballotBox;
-    
+
     address public alice = makeAddr("alice");
     address public bob = makeAddr("bob");
     address public charlie = makeAddr("charlie");
-    
+
     uint32 public constant FUTURE_DEADLINE = 1736640000; // Jan 12, 2025
     string public constant VALID_TITLE = "Test Proposal";
     string public constant VALID_DESCRIPTION = "This is a test proposal";
@@ -25,16 +25,12 @@ contract BallotBoxTest is Test {
 
     function test_CreateProposal_Success() public {
         vm.prank(alice);
-        uint256 proposalId = ballotBox.createProposal(
-            VALID_TITLE,
-            VALID_DESCRIPTION,
-            VALID_DETAILS_HASH,
-            FUTURE_DEADLINE
-        );
+        uint256 proposalId =
+            ballotBox.createProposal(VALID_TITLE, VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
 
         assertEq(proposalId, 1);
         assertEq(ballotBox.proposalCount(), 1);
-        
+
         BallotBox.Proposal memory proposal = ballotBox.getProposal(1);
         assertEq(proposal.id, 1);
         assertEq(proposal.title, VALID_TITLE);
@@ -45,7 +41,7 @@ contract BallotBoxTest is Test {
         assertEq(proposal.yesVotes, 0);
         assertEq(proposal.noVotes, 0);
         assertTrue(proposal.active);
-        
+
         // Test author indexing
         uint256[] memory authorProposals = ballotBox.getProposalIdsByAuthor(alice);
         assertEq(authorProposals.length, 1);
@@ -55,37 +51,24 @@ contract BallotBoxTest is Test {
     function test_CreateProposal_EmitsEvent() public {
         vm.expectEmit(true, true, false, true);
         emit ProposalCreated(1, alice, VALID_TITLE, FUTURE_DEADLINE, VALID_DETAILS_HASH);
-        
+
         vm.prank(alice);
-        ballotBox.createProposal(
-            VALID_TITLE,
-            VALID_DESCRIPTION,
-            VALID_DETAILS_HASH,
-            FUTURE_DEADLINE
-        );
+        ballotBox.createProposal(VALID_TITLE, VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
     }
 
     function test_CreateProposal_MultipleProposals() public {
         vm.prank(alice);
-        uint256 proposal1 = ballotBox.createProposal(
-            "Proposal 1",
-            VALID_DESCRIPTION,
-            VALID_DETAILS_HASH,
-            FUTURE_DEADLINE
-        );
-        
+        uint256 proposal1 =
+            ballotBox.createProposal("Proposal 1", VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
+
         vm.prank(bob);
-        uint256 proposal2 = ballotBox.createProposal(
-            "Proposal 2",
-            VALID_DESCRIPTION,
-            VALID_DETAILS_HASH,
-            FUTURE_DEADLINE
-        );
+        uint256 proposal2 =
+            ballotBox.createProposal("Proposal 2", VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
 
         assertEq(proposal1, 1);
         assertEq(proposal2, 2);
         assertEq(ballotBox.proposalCount(), 2);
-        
+
         // Test author indexing
         assertEq(ballotBox.getAuthorProposalCount(alice), 1);
         assertEq(ballotBox.getAuthorProposalCount(bob), 1);
@@ -104,16 +87,18 @@ contract BallotBoxTest is Test {
     }
 
     function test_CreateProposal_RevertTitleTooLong() public {
-        string memory longTitle = "This is a very long title that definitely exceeds the maximum allowed length of 100 characters for sure and keeps going";
-        
+        string memory longTitle =
+            "This is a very long title that definitely exceeds the maximum allowed length of 100 characters for sure and keeps going";
+
         vm.prank(alice);
         vm.expectRevert(BallotBox.TitleTooLong.selector);
         ballotBox.createProposal(longTitle, VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
     }
 
     function test_CreateProposal_RevertDescriptionTooLong() public {
-        string memory longDescription = "This is a very long description that exceeds the maximum allowed length of 200 characters. It keeps going and going and going and going to make sure it definitely exceeds the limit set for descriptions in the contract.";
-        
+        string memory longDescription =
+            "This is a very long description that exceeds the maximum allowed length of 200 characters. It keeps going and going and going and going to make sure it definitely exceeds the limit set for descriptions in the contract.";
+
         vm.prank(alice);
         vm.expectRevert(BallotBox.DescriptionTooLong.selector);
         ballotBox.createProposal(VALID_TITLE, longDescription, VALID_DETAILS_HASH, FUTURE_DEADLINE);
@@ -130,12 +115,8 @@ contract BallotBoxTest is Test {
     function test_Vote_YesVote() public {
         // Create proposal
         vm.prank(alice);
-        uint256 proposalId = ballotBox.createProposal(
-            VALID_TITLE,
-            VALID_DESCRIPTION,
-            VALID_DETAILS_HASH,
-            FUTURE_DEADLINE
-        );
+        uint256 proposalId =
+            ballotBox.createProposal(VALID_TITLE, VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
 
         // Vote yes
         vm.prank(bob);
@@ -144,7 +125,7 @@ contract BallotBoxTest is Test {
         BallotBox.Proposal memory proposal = ballotBox.getProposal(proposalId);
         assertEq(proposal.yesVotes, 1);
         assertEq(proposal.noVotes, 0);
-        
+
         assertTrue(ballotBox.hasVoted(proposalId, bob));
         assertTrue(ballotBox.getVote(proposalId, bob));
     }
@@ -152,12 +133,8 @@ contract BallotBoxTest is Test {
     function test_Vote_NoVote() public {
         // Create proposal
         vm.prank(alice);
-        uint256 proposalId = ballotBox.createProposal(
-            VALID_TITLE,
-            VALID_DESCRIPTION,
-            VALID_DETAILS_HASH,
-            FUTURE_DEADLINE
-        );
+        uint256 proposalId =
+            ballotBox.createProposal(VALID_TITLE, VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
 
         // Vote no
         vm.prank(bob);
@@ -166,39 +143,31 @@ contract BallotBoxTest is Test {
         BallotBox.Proposal memory proposal = ballotBox.getProposal(proposalId);
         assertEq(proposal.yesVotes, 0);
         assertEq(proposal.noVotes, 1);
-        
+
         assertTrue(ballotBox.hasVoted(proposalId, bob));
         assertFalse(ballotBox.getVote(proposalId, bob));
     }
 
     function test_Vote_EmitsEvent() public {
         vm.prank(alice);
-        uint256 proposalId = ballotBox.createProposal(
-            VALID_TITLE,
-            VALID_DESCRIPTION,
-            VALID_DETAILS_HASH,
-            FUTURE_DEADLINE
-        );
+        uint256 proposalId =
+            ballotBox.createProposal(VALID_TITLE, VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
 
         vm.expectEmit(true, true, false, true);
         emit VoteCast(proposalId, bob, true);
-        
+
         vm.prank(bob);
         ballotBox.vote(proposalId, true);
     }
 
     function test_Vote_MultipleVoters() public {
         vm.prank(alice);
-        uint256 proposalId = ballotBox.createProposal(
-            VALID_TITLE,
-            VALID_DESCRIPTION,
-            VALID_DETAILS_HASH,
-            FUTURE_DEADLINE
-        );
+        uint256 proposalId =
+            ballotBox.createProposal(VALID_TITLE, VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
 
         vm.prank(bob);
         ballotBox.vote(proposalId, true);
-        
+
         vm.prank(charlie);
         ballotBox.vote(proposalId, false);
 
@@ -215,12 +184,8 @@ contract BallotBoxTest is Test {
 
     function test_Vote_RevertAlreadyVoted() public {
         vm.prank(alice);
-        uint256 proposalId = ballotBox.createProposal(
-            VALID_TITLE,
-            VALID_DESCRIPTION,
-            VALID_DETAILS_HASH,
-            FUTURE_DEADLINE
-        );
+        uint256 proposalId =
+            ballotBox.createProposal(VALID_TITLE, VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
 
         vm.prank(bob);
         ballotBox.vote(proposalId, true);
@@ -232,14 +197,9 @@ contract BallotBoxTest is Test {
 
     function test_Vote_RevertProposalExpired() public {
         uint32 pastDeadline = uint32(block.timestamp + 1 hours);
-        
+
         vm.prank(alice);
-        uint256 proposalId = ballotBox.createProposal(
-            VALID_TITLE,
-            VALID_DESCRIPTION,
-            VALID_DETAILS_HASH,
-            pastDeadline
-        );
+        uint256 proposalId = ballotBox.createProposal(VALID_TITLE, VALID_DESCRIPTION, VALID_DETAILS_HASH, pastDeadline);
 
         // Fast forward past deadline
         vm.warp(pastDeadline + 1);
@@ -302,11 +262,11 @@ contract BallotBoxTest is Test {
         BallotBox.Proposal[] memory bobProposals = ballotBox.getProposalsByAuthor(bob, 0, 10);
         assertEq(bobProposals.length, 1);
         assertEq(bobProposals[0].title, "Bob 1");
-        
+
         // Test new efficient functions
         assertEq(ballotBox.getAuthorProposalCount(alice), 2);
         assertEq(ballotBox.getAuthorProposalCount(bob), 1);
-        
+
         uint256[] memory aliceIds = ballotBox.getProposalIdsByAuthor(alice);
         assertEq(aliceIds.length, 2);
         assertEq(aliceIds[0], 1); // First proposal by Alice
@@ -315,24 +275,16 @@ contract BallotBoxTest is Test {
 
     function test_HasVoted_ReturnsFalseWhenNotVoted() public {
         vm.prank(alice);
-        uint256 proposalId = ballotBox.createProposal(
-            VALID_TITLE,
-            VALID_DESCRIPTION,
-            VALID_DETAILS_HASH,
-            FUTURE_DEADLINE
-        );
+        uint256 proposalId =
+            ballotBox.createProposal(VALID_TITLE, VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
 
         assertFalse(ballotBox.hasVoted(proposalId, bob));
     }
 
     function test_GetVote_RevertWhenNotVoted() public {
         vm.prank(alice);
-        uint256 proposalId = ballotBox.createProposal(
-            VALID_TITLE,
-            VALID_DESCRIPTION,
-            VALID_DETAILS_HASH,
-            FUTURE_DEADLINE
-        );
+        uint256 proposalId =
+            ballotBox.createProposal(VALID_TITLE, VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
 
         vm.expectRevert("User has not voted");
         ballotBox.getVote(proposalId, bob);
@@ -340,14 +292,10 @@ contract BallotBoxTest is Test {
 
     function test_IsProposalOpen() public {
         uint32 futureDeadline = uint32(block.timestamp + 1 hours);
-        
+
         vm.prank(alice);
-        uint256 proposalId = ballotBox.createProposal(
-            VALID_TITLE,
-            VALID_DESCRIPTION,
-            VALID_DETAILS_HASH,
-            futureDeadline
-        );
+        uint256 proposalId =
+            ballotBox.createProposal(VALID_TITLE, VALID_DESCRIPTION, VALID_DETAILS_HASH, futureDeadline);
 
         assertTrue(ballotBox.isProposalOpen(proposalId));
 
@@ -383,10 +331,10 @@ contract BallotBoxTest is Test {
         // Multiple users vote
         vm.prank(bob);
         ballotBox.vote(proposalId, true);
-        
+
         vm.prank(charlie);
         ballotBox.vote(proposalId, true);
-        
+
         vm.prank(makeAddr("david"));
         ballotBox.vote(proposalId, false);
 
@@ -404,22 +352,17 @@ contract BallotBoxTest is Test {
     function test_EdgeCase_MaxLengthInputs() public {
         string memory maxTitle = "";
         string memory maxDescription = "";
-        
+
         // Create strings at maximum allowed length
-        for (uint i = 0; i < 100; i++) {
+        for (uint256 i = 0; i < 100; i++) {
             maxTitle = string.concat(maxTitle, "a");
         }
-        for (uint i = 0; i < 200; i++) {
+        for (uint256 i = 0; i < 200; i++) {
             maxDescription = string.concat(maxDescription, "b");
         }
 
         vm.prank(alice);
-        uint256 proposalId = ballotBox.createProposal(
-            maxTitle,
-            maxDescription,
-            VALID_DETAILS_HASH,
-            FUTURE_DEADLINE
-        );
+        uint256 proposalId = ballotBox.createProposal(maxTitle, maxDescription, VALID_DETAILS_HASH, FUTURE_DEADLINE);
 
         BallotBox.Proposal memory proposal = ballotBox.getProposal(proposalId);
         assertEq(bytes(proposal.title).length, 100);
@@ -430,27 +373,23 @@ contract BallotBoxTest is Test {
     // Test gas optimization: vote count overflow protection
     function test_Vote_OverflowProtection() public {
         vm.prank(alice);
-        uint256 proposalId = ballotBox.createProposal(
-            VALID_TITLE,
-            VALID_DESCRIPTION,
-            VALID_DETAILS_HASH,
-            FUTURE_DEADLINE
-        );
+        uint256 proposalId =
+            ballotBox.createProposal(VALID_TITLE, VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
 
         // Manually set vote count to max value
         BallotBox.Proposal memory proposal = ballotBox.getProposal(proposalId);
         // This would require direct storage manipulation in a real test
         // For now, we'll just test that the contract doesn't revert with normal counts
-        
+
         vm.prank(bob);
         ballotBox.vote(proposalId, true);
-        
+
         proposal = ballotBox.getProposal(proposalId);
         assertEq(proposal.yesVotes, 1);
     }
 
     // ============ GAS OPTIMIZATION TESTS ============
-    
+
     function test_GasOptimization_AuthorQueries() public {
         // Create multiple proposals by different authors
         vm.prank(alice);
@@ -468,33 +407,29 @@ contract BallotBoxTest is Test {
         uint256 gasBefore = gasleft();
         uint256[] memory aliceIds = ballotBox.getProposalIdsByAuthor(alice);
         uint256 gasUsed = gasBefore - gasleft();
-        
+
         assertEq(aliceIds.length, 3);
         assertEq(aliceIds[0], 1);
         assertEq(aliceIds[1], 3);
         assertEq(aliceIds[2], 5);
-        
+
         // Gas usage should be much lower than O(n) iteration
         console.log("Gas used for getProposalIdsByAuthor:", gasUsed);
-        
+
         // Test efficient proposal count
         assertEq(ballotBox.getAuthorProposalCount(alice), 3);
         assertEq(ballotBox.getAuthorProposalCount(bob), 1);
         assertEq(ballotBox.getAuthorProposalCount(charlie), 1);
     }
-    
+
     function test_GasOptimization_PackedStructComparison() public {
         // Test that struct packing reduces storage operations
         vm.prank(alice);
-        uint256 proposalId = ballotBox.createProposal(
-            VALID_TITLE,
-            VALID_DESCRIPTION,
-            VALID_DETAILS_HASH,
-            FUTURE_DEADLINE
-        );
-        
+        uint256 proposalId =
+            ballotBox.createProposal(VALID_TITLE, VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
+
         BallotBox.Proposal memory proposal = ballotBox.getProposal(proposalId);
-        
+
         // Verify packed values are correct
         assertEq(proposal.author, alice);
         assertEq(proposal.yesVotes, 0);
@@ -503,37 +438,24 @@ contract BallotBoxTest is Test {
         assertTrue(proposal.createdAt > 0);
         assertEq(proposal.deadline, FUTURE_DEADLINE);
     }
-    
+
     function test_GasOptimization_IPFSHashStorage() public {
         bytes32 ipfsHash = 0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef;
-        
+
         vm.prank(alice);
-        uint256 proposalId = ballotBox.createProposal(
-            VALID_TITLE,
-            VALID_DESCRIPTION,
-            ipfsHash,
-            FUTURE_DEADLINE
-        );
-        
+        uint256 proposalId = ballotBox.createProposal(VALID_TITLE, VALID_DESCRIPTION, ipfsHash, FUTURE_DEADLINE);
+
         BallotBox.Proposal memory proposal = ballotBox.getProposal(proposalId);
         assertEq(proposal.detailsHash, ipfsHash);
-        
+
         // This approach saves significant gas compared to storing large strings
         // A 2000 character string would cost ~15M gas vs 32 bytes (600 gas)
     }
 
     // Events to match contract events
     event ProposalCreated(
-        uint256 indexed proposalId,
-        address indexed author,
-        string title,
-        uint32 deadline,
-        bytes32 detailsHash
+        uint256 indexed proposalId, address indexed author, string title, uint32 deadline, bytes32 detailsHash
     );
-    
-    event VoteCast(
-        uint256 indexed proposalId,
-        address indexed voter,
-        bool vote
-    );
+
+    event VoteCast(uint256 indexed proposalId, address indexed voter, bool vote);
 }

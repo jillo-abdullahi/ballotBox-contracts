@@ -4,16 +4,16 @@ pragma solidity ^0.8.19;
 contract BallotBox {
     // Optimized struct with packed storage
     struct Proposal {
-        uint256 id;                    // slot 1
-        address author;                // slot 2 (20 bytes)
-        uint96 yesVotes;              // slot 2 (12 bytes) - packed with author
-        uint96 noVotes;               // slot 3 (12 bytes)
-        uint32 createdAt;             // slot 3 (4 bytes) - packed
-        uint32 deadline;              // slot 3 (4 bytes) - packed  
-        bool active;                  // slot 3 (1 byte) - packed
-        string title;                 // slot 4+
-        string description;           // slot N+
-        bytes32 detailsHash;          // slot M (32 bytes) - IPFS hash instead of full details
+        uint256 id; // slot 1
+        address author; // slot 2 (20 bytes)
+        uint96 yesVotes; // slot 2 (12 bytes) - packed with author
+        uint96 noVotes; // slot 3 (12 bytes)
+        uint32 createdAt; // slot 3 (4 bytes) - packed
+        uint32 deadline; // slot 3 (4 bytes) - packed
+        bool active; // slot 3 (1 byte) - packed
+        string title; // slot 4+
+        string description; // slot N+
+        bytes32 detailsHash; // slot M (32 bytes) - IPFS hash instead of full details
     }
 
     struct Vote {
@@ -31,18 +31,10 @@ contract BallotBox {
 
     // Events
     event ProposalCreated(
-        uint256 indexed proposalId,
-        address indexed author,
-        string title,
-        uint32 deadline,
-        bytes32 detailsHash
+        uint256 indexed proposalId, address indexed author, string title, uint32 deadline, bytes32 detailsHash
     );
-    
-    event VoteCast(
-        uint256 indexed proposalId,
-        address indexed voter,
-        bool vote
-    );
+
+    event VoteCast(uint256 indexed proposalId, address indexed voter, bool vote);
 
     // Errors
     error InvalidDeadline();
@@ -110,20 +102,17 @@ contract BallotBox {
      */
     function vote(uint256 _proposalId, bool _vote) external {
         Proposal storage proposal = proposals[_proposalId];
-        
+
         // Validate proposal exists and is active
         if (proposal.id == 0) revert ProposalNotFound();
         if (!proposal.active) revert ProposalNotActive();
         if (block.timestamp > proposal.deadline) revert ProposalExpired();
-        
+
         // Check if user has already voted
         if (votes[_proposalId][msg.sender].hasVoted) revert AlreadyVoted();
 
         // Record the vote
-        votes[_proposalId][msg.sender] = Vote({
-            hasVoted: true,
-            vote: _vote
-        });
+        votes[_proposalId][msg.sender] = Vote({hasVoted: true, vote: _vote});
 
         // Update vote counts with overflow protection
         if (_vote) {
@@ -155,11 +144,7 @@ contract BallotBox {
      * @param _offset Number of proposals to skip
      * @param _limit Maximum number of proposals to return
      */
-    function getProposals(uint256 _offset, uint256 _limit) 
-        external 
-        view 
-        returns (Proposal[] memory) 
-    {
+    function getProposals(uint256 _offset, uint256 _limit) external view returns (Proposal[] memory) {
         if (_limit == 0 || _limit > 50) _limit = 50; // Max 50 per page
         if (_offset >= proposalCount) {
             return new Proposal[](0);
@@ -184,16 +169,16 @@ contract BallotBox {
      * @param _offset Number of proposals to skip
      * @param _limit Maximum number of proposals to return
      */
-    function getProposalsByAuthor(
-        address _author,
-        uint256 _offset,
-        uint256 _limit
-    ) external view returns (Proposal[] memory) {
+    function getProposalsByAuthor(address _author, uint256 _offset, uint256 _limit)
+        external
+        view
+        returns (Proposal[] memory)
+    {
         if (_limit == 0 || _limit > 50) _limit = 50;
-        
+
         uint256[] memory authorProposalIds = proposalsByAuthor[_author];
         uint256 totalAuthorProposals = authorProposalIds.length;
-        
+
         if (_offset >= totalAuthorProposals) {
             return new Proposal[](0);
         }

@@ -15,14 +15,14 @@ contract DeployScript is Script {
         console.log("BallotBox deployed to:", address(ballotBox));
         console.log("Deployer address:", msg.sender);
         console.log("Chain ID:", block.chainid);
-        
+
         // Log some initial state
         console.log("Initial proposal count:", ballotBox.proposalCount());
         console.log("Max title length:", ballotBox.MAX_TITLE_LENGTH());
         console.log("Max description length:", ballotBox.MAX_DESCRIPTION_LENGTH());
-        
+
         vm.stopBroadcast();
-        
+
         console.log("=== Deployment Complete ===");
         console.log("Next steps:");
         console.log("1. Verify contract on Etherscan (if on testnet/mainnet)");

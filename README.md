@@ -1,66 +1,71 @@
-## Foundry
+# BallotBox Smart Contracts
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+A gas-optimized decentralized voting system built with Foundry.
 
-Foundry consists of:
+## Overview
 
-- **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
-- **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
-- **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
-- **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+BallotBox allows users to create proposals and vote on them in a decentralized manner. The contract has been optimized for gas efficiency while maintaining security and functionality.
 
-## Documentation
+## Features
 
-https://book.getfoundry.sh/
+- ✅ Create proposals with title, description, and IPFS content hash
+- ✅ Vote on active proposals (Yes/No voting)
+- ✅ Query proposals with pagination
+- ✅ Author-based proposal filtering
+- ✅ Gas-optimized storage with packed structs
+- ✅ IPFS integration for large content
+- ✅ Overflow protection and safety checks
 
-## Usage
+## Quick Start
 
 ### Build
-
 ```shell
-$ forge build
+forge build
 ```
 
 ### Test
-
 ```shell
-$ forge test
+forge test
 ```
 
-### Format
-
+### Test with Gas Report
 ```shell
-$ forge fmt
+forge test --gas-report
 ```
 
-### Gas Snapshots
-
+### Deploy Locally
 ```shell
-$ forge snapshot
+# Start local node
+anvil
+
+# Deploy (in another terminal)
+forge script script/Counter.s.sol --rpc-url http://localhost:8545 --private-key <anvil_private_key> --broadcast
 ```
 
-### Anvil
+## Gas Optimizations
 
-```shell
-$ anvil
-```
+This contract includes several gas optimizations:
 
-### Deploy
+- **Packed structs**: Reduces storage slots
+- **Author indexing**: O(1) author queries instead of O(n)
+- **IPFS integration**: Store large proposal details content off-chain
+- **uint96 vote counts**: Sufficient range with packed storage
+- **Unchecked arithmetic**: Where overflow is impossible
 
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
+## Contract Functions
 
-### Cast
+### Core Functions
+- `createProposal()` - Create a new proposal
+- `vote()` - Vote on a proposal
+- `getProposal()` - Get proposal details
+- `getProposals()` - Get proposals with pagination
 
-```shell
-$ cast <subcommand>
-```
+### Query Functions
+- `getProposalsByAuthor()` - Get proposals by specific author
+- `getProposalIdsByAuthor()` - Get proposal IDs for an author
+- `hasVoted()` - Check if address has voted
+- `isProposalOpen()` - Check if proposal is open for voting
 
-### Help
+## Development
 
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+Built with [Foundry](https://book.getfoundry.sh/)

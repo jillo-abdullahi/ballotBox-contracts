@@ -39,7 +39,45 @@ forge test --gas-report
 anvil
 
 # Deploy (in another terminal)
-forge script script/Counter.s.sol --rpc-url http://localhost:8545 --private-key <anvil_private_key> --broadcast
+forge script script/Deploy.s.sol --rpc-url http://localhost:8545 --private-key <anvil_private_key> --broadcast
+```
+
+### Deploy to Sepolia Testnet
+```shell
+# Deploy to Sepolia
+forge script script/Deploy.s.sol \
+  --rpc-url https://sepolia.infura.io/v3/<your_infura_key> \
+  --private-key <your_private_key> \
+  --broadcast \
+  --verify \
+  --etherscan-api-key <your_etherscan_api_key>
+```
+
+### Deploy to Mainnet
+```shell
+# Deploy to Ethereum Mainnet (use with caution!)
+forge script script/Deploy.s.sol \
+  --rpc-url https://mainnet.infura.io/v3/<your_infura_key> \
+  --private-key <your_private_key> \
+  --broadcast \
+  --verify \
+  --etherscan-api-key <your_etherscan_api_key>
+```
+
+### Environment Variables (Recommended)
+Create a `.env` file for safer key management:
+```bash
+# .env file
+SEPOLIA_RPC_URL=https://sepolia.infura.io/v3/your_infura_key
+MAINNET_RPC_URL=https://mainnet.infura.io/v3/your_infura_key
+PRIVATE_KEY=your_private_key_here
+ETHERSCAN_API_KEY=your_etherscan_api_key
+```
+
+Then deploy with:
+```shell
+source .env
+forge script script/Deploy.s.sol --rpc-url $SEPOLIA_RPC_URL --private-key $PRIVATE_KEY --broadcast --verify --etherscan-api-key $ETHERSCAN_API_KEY
 ```
 
 ## Gas Optimizations

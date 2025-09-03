@@ -2,6 +2,10 @@
 
 A gas-optimized decentralized voting system built with Foundry.
 
+## 🚀 Deployed Contract
+
+**Sepolia Testnet**: [`0xD9a4Ded9Ae3A3aAda18e9b04bfA4DD5b2a4F1602`](https://sepolia.etherscan.io/address/0xD9a4Ded9Ae3A3aAda18e9b04bfA4DD5b2a4F1602)
+
 ## Overview
 
 BallotBox allows users to create proposals and vote on them in a decentralized manner. The contract has been optimized for gas efficiency while maintaining security and functionality.

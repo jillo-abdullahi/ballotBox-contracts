@@ -5,7 +5,7 @@ Complete guide for integrating the BallotBox contract with efficient filtering i
 ## 🚀 Quick Start
 
 ### Contract Address
-**Sepolia Testnet**: `0xD9a4Ded9Ae3A3aAda18e9b04bfA4DD5b2a4F1602`
+**Sepolia Testnet**: `0x2F556EA04c4bcd1ff2F80C52369C3AE711201927`
 
 ### Installation
 ```bash
@@ -191,7 +191,7 @@ export const BALLOT_BOX_ABI = [
 import { useState, useEffect, useMemo } from 'react'
 import { useContractRead, useContractReads } from 'wagmi'
 
-const BALLOT_BOX_ADDRESS = '0xD9a4Ded9Ae3A3aAda18e9b04bfA4DD5b2a4F1602'
+const BALLOT_BOX_ADDRESS = '0x2F556EA04c4bcd1ff2F80C52369C3AE711201927'
 const PAGE_SIZE = 10
 
 type FilterStatus = 'all' | 'open' | 'closed'

@@ -212,15 +212,15 @@ contract BallotBox {
      */
     function getOpenProposals(uint256 _offset, uint256 _limit) external view returns (Proposal[] memory) {
         if (_limit == 0 || _limit > 50) _limit = 50;
-        
+
         uint256 found = 0;
         uint256 skipped = 0;
         Proposal[] memory result = new Proposal[](_limit);
-        
+
         // Iterate through proposals from newest to oldest
         for (uint256 i = proposalCount; i > 0 && found < _limit; i--) {
             Proposal storage proposal = proposals[i];
-            
+
             // Check if proposal is open (active and not expired)
             if (proposal.active && block.timestamp <= proposal.deadline) {
                 if (skipped >= _offset) {
@@ -231,12 +231,12 @@ contract BallotBox {
                 }
             }
         }
-        
+
         // Resize array to actual found count
         assembly {
             mstore(result, found)
         }
-        
+
         return result;
     }
 
@@ -247,15 +247,15 @@ contract BallotBox {
      */
     function getClosedProposals(uint256 _offset, uint256 _limit) external view returns (Proposal[] memory) {
         if (_limit == 0 || _limit > 50) _limit = 50;
-        
+
         uint256 found = 0;
         uint256 skipped = 0;
         Proposal[] memory result = new Proposal[](_limit);
-        
+
         // Iterate through proposals from newest to oldest
         for (uint256 i = proposalCount; i > 0 && found < _limit; i--) {
             Proposal storage proposal = proposals[i];
-            
+
             // Check if proposal is closed (inactive or expired)
             if (!proposal.active || block.timestamp > proposal.deadline) {
                 if (skipped >= _offset) {
@@ -266,12 +266,12 @@ contract BallotBox {
                 }
             }
         }
-        
+
         // Resize array to actual found count
         assembly {
             mstore(result, found)
         }
-        
+
         return result;
     }
 
@@ -303,7 +303,7 @@ contract BallotBox {
         for (uint256 i = totalAuthorProposals; i > 0 && found < _limit; i--) {
             uint256 proposalId = authorProposalIds[i - 1];
             Proposal storage proposal = proposals[proposalId];
-            
+
             // Check if proposal is open
             if (proposal.active && block.timestamp <= proposal.deadline) {
                 if (skipped >= _offset) {
@@ -351,7 +351,7 @@ contract BallotBox {
         for (uint256 i = totalAuthorProposals; i > 0 && found < _limit; i--) {
             uint256 proposalId = authorProposalIds[i - 1];
             Proposal storage proposal = proposals[proposalId];
-            
+
             // Check if proposal is closed
             if (!proposal.active || block.timestamp > proposal.deadline) {
                 if (skipped >= _offset) {
@@ -406,7 +406,7 @@ contract BallotBox {
     function getOpenProposalCountByAuthor(address _author) external view returns (uint256) {
         uint256[] memory authorProposalIds = proposalsByAuthor[_author];
         uint256 count = 0;
-        
+
         for (uint256 i = 0; i < authorProposalIds.length; i++) {
             uint256 proposalId = authorProposalIds[i];
             Proposal storage proposal = proposals[proposalId];
@@ -424,7 +424,7 @@ contract BallotBox {
     function getClosedProposalCountByAuthor(address _author) external view returns (uint256) {
         uint256[] memory authorProposalIds = proposalsByAuthor[_author];
         uint256 count = 0;
-        
+
         for (uint256 i = 0; i < authorProposalIds.length; i++) {
             uint256 proposalId = authorProposalIds[i];
             Proposal storage proposal = proposals[proposalId];

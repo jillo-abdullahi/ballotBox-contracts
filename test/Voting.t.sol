@@ -457,21 +457,18 @@ contract BallotBoxTest is Test {
     function test_GetOpenProposals_Success() public {
         // Create a mix of open and closed proposals
         vm.prank(alice);
-        uint256 openProposal1 = ballotBox.createProposal(
-            "Open Proposal 1", VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE
-        );
+        uint256 openProposal1 =
+            ballotBox.createProposal("Open Proposal 1", VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
 
         vm.prank(bob);
-        uint256 openProposal2 = ballotBox.createProposal(
-            "Open Proposal 2", VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE
-        );
+        uint256 openProposal2 =
+            ballotBox.createProposal("Open Proposal 2", VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
 
         // Create a proposal that will be expired
         uint32 pastDeadline = uint32(block.timestamp + 1 hours);
         vm.prank(charlie);
-        uint256 expiredProposal = ballotBox.createProposal(
-            "Expired Proposal", VALID_DESCRIPTION, VALID_DETAILS_HASH, pastDeadline
-        );
+        uint256 expiredProposal =
+            ballotBox.createProposal("Expired Proposal", VALID_DESCRIPTION, VALID_DETAILS_HASH, pastDeadline);
 
         // Fast forward to make one proposal expired
         vm.warp(pastDeadline + 1);
@@ -493,21 +490,18 @@ contract BallotBoxTest is Test {
     function test_GetClosedProposals_Success() public {
         // Create open proposals
         vm.prank(alice);
-        uint256 openProposal = ballotBox.createProposal(
-            "Open Proposal", VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE
-        );
+        uint256 openProposal =
+            ballotBox.createProposal("Open Proposal", VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
 
         // Create proposals with past deadlines
         uint32 pastDeadline = uint32(block.timestamp + 1 hours);
         vm.prank(bob);
-        uint256 expiredProposal1 = ballotBox.createProposal(
-            "Expired 1", VALID_DESCRIPTION, VALID_DETAILS_HASH, pastDeadline
-        );
+        uint256 expiredProposal1 =
+            ballotBox.createProposal("Expired 1", VALID_DESCRIPTION, VALID_DETAILS_HASH, pastDeadline);
 
         vm.prank(charlie);
-        uint256 expiredProposal2 = ballotBox.createProposal(
-            "Expired 2", VALID_DESCRIPTION, VALID_DETAILS_HASH, pastDeadline
-        );
+        uint256 expiredProposal2 =
+            ballotBox.createProposal("Expired 2", VALID_DESCRIPTION, VALID_DETAILS_HASH, pastDeadline);
 
         // Fast forward to make proposals expired
         vm.warp(pastDeadline + 1);
@@ -524,20 +518,17 @@ contract BallotBoxTest is Test {
     function test_GetOpenProposalsByAuthor_Success() public {
         // Alice creates 2 open proposals and 1 that will expire
         vm.prank(alice);
-        uint256 aliceOpen1 = ballotBox.createProposal(
-            "Alice Open 1", VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE
-        );
+        uint256 aliceOpen1 =
+            ballotBox.createProposal("Alice Open 1", VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
 
         uint32 pastDeadline = uint32(block.timestamp + 1 hours);
         vm.prank(alice);
-        uint256 aliceExpired = ballotBox.createProposal(
-            "Alice Expired", VALID_DESCRIPTION, VALID_DETAILS_HASH, pastDeadline
-        );
+        uint256 aliceExpired =
+            ballotBox.createProposal("Alice Expired", VALID_DESCRIPTION, VALID_DETAILS_HASH, pastDeadline);
 
         vm.prank(alice);
-        uint256 aliceOpen2 = ballotBox.createProposal(
-            "Alice Open 2", VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE
-        );
+        uint256 aliceOpen2 =
+            ballotBox.createProposal("Alice Open 2", VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
 
         // Bob creates one open proposal
         vm.prank(bob);
@@ -562,17 +553,15 @@ contract BallotBoxTest is Test {
         uint32 pastDeadline = uint32(block.timestamp + 1 hours);
 
         vm.prank(alice);
-        uint256 aliceExpired1 = ballotBox.createProposal(
-            "Alice Expired 1", VALID_DESCRIPTION, VALID_DETAILS_HASH, pastDeadline
-        );
+        uint256 aliceExpired1 =
+            ballotBox.createProposal("Alice Expired 1", VALID_DESCRIPTION, VALID_DETAILS_HASH, pastDeadline);
 
         vm.prank(alice);
         ballotBox.createProposal("Alice Open", VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
 
         vm.prank(alice);
-        uint256 aliceExpired2 = ballotBox.createProposal(
-            "Alice Expired 2", VALID_DESCRIPTION, VALID_DETAILS_HASH, pastDeadline
-        );
+        uint256 aliceExpired2 =
+            ballotBox.createProposal("Alice Expired 2", VALID_DESCRIPTION, VALID_DETAILS_HASH, pastDeadline);
 
         // Fast forward to expire proposals
         vm.warp(pastDeadline + 1);

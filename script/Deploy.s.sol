@@ -24,9 +24,32 @@ contract DeployScript is Script {
         vm.stopBroadcast();
 
         console.log("=== Deployment Complete ===");
+        console.log("");
+        console.log("Available Contract Functions:");
+        console.log("Core Functions:");
+        console.log("- createProposal(title, description, ipfsHash, deadline)");
+        console.log("- vote(proposalId, voteChoice)");
+        console.log("- getProposal(proposalId)");
+        console.log("");
+        console.log("Filtering Functions (NEW):");
+        console.log("- getOpenProposals(offset, limit)");
+        console.log("- getClosedProposals(offset, limit)");
+        console.log("- getOpenProposalsByAuthor(author, offset, limit)");
+        console.log("- getClosedProposalsByAuthor(author, offset, limit)");
+        console.log("");
+        console.log("Count Functions (NEW):");
+        console.log("- getOpenProposalCount()");
+        console.log("- getClosedProposalCount()");
+        console.log("- getOpenProposalCountByAuthor(author)");
+        console.log("- getClosedProposalCountByAuthor(author)");
+        console.log("");
+        console.log("Legacy Functions:");
+        console.log("- getProposals(offset, limit) - All proposals");
+        console.log("- getProposalsByAuthor(author, offset, limit)");
+        console.log("");
         console.log("Next steps:");
         console.log("1. Verify contract on Etherscan (if on testnet/mainnet)");
-        console.log("2. Test contract functionality");
-        console.log("3. Update frontend with contract address");
+        console.log("2. Test contract functionality with new filtering");
+        console.log("3. Update frontend to use efficient filtering functions");
     }
 }

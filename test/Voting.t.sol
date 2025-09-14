@@ -452,6 +452,259 @@ contract BallotBoxTest is Test {
         // A 2000 character string would cost ~15M gas vs 32 bytes (600 gas)
     }
 
+    // ============ CONTRACT-LEVEL FILTERING TESTS ============
+
+    function test_GetOpenProposals_Success() public {
+        // Create a mix of open and closed proposals
+        vm.prank(alice);
+        uint256 openProposal1 = ballotBox.createProposal(
+            "Open Proposal 1", VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE
+        );
+
+        vm.prank(bob);
+        uint256 openProposal2 = ballotBox.createProposal(
+            "Open Proposal 2", VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE
+        );
+
+        // Create a proposal that will be expired
+        uint32 pastDeadline = uint32(block.timestamp + 1 hours);
+        vm.prank(charlie);
+        uint256 expiredProposal = ballotBox.createProposal(
+            "Expired Proposal", VALID_DESCRIPTION, VALID_DETAILS_HASH, pastDeadline
+        );
+
+        // Fast forward to make one proposal expired
+        vm.warp(pastDeadline + 1);
+
+        // Get open proposals
+        BallotBox.Proposal[] memory openProposals = ballotBox.getOpenProposals(0, 10);
+
+        // Should only return the 2 open proposals
+        assertEq(openProposals.length, 2);
+        assertEq(openProposals[0].id, openProposal2); // Newest first
+        assertEq(openProposals[1].id, openProposal1);
+
+        // Verify they are indeed open
+        assertTrue(ballotBox.isProposalOpen(openProposal1));
+        assertTrue(ballotBox.isProposalOpen(openProposal2));
+        assertFalse(ballotBox.isProposalOpen(expiredProposal));
+    }
+
+    function test_GetClosedProposals_Success() public {
+        // Create open proposals
+        vm.prank(alice);
+        uint256 openProposal = ballotBox.createProposal(
+            "Open Proposal", VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE
+        );
+
+        // Create proposals with past deadlines
+        uint32 pastDeadline = uint32(block.timestamp + 1 hours);
+        vm.prank(bob);
+        uint256 expiredProposal1 = ballotBox.createProposal(
+            "Expired 1", VALID_DESCRIPTION, VALID_DETAILS_HASH, pastDeadline
+        );
+
+        vm.prank(charlie);
+        uint256 expiredProposal2 = ballotBox.createProposal(
+            "Expired 2", VALID_DESCRIPTION, VALID_DETAILS_HASH, pastDeadline
+        );
+
+        // Fast forward to make proposals expired
+        vm.warp(pastDeadline + 1);
+
+        // Get closed proposals
+        BallotBox.Proposal[] memory closedProposals = ballotBox.getClosedProposals(0, 10);
+
+        // Should only return the 2 expired proposals
+        assertEq(closedProposals.length, 2);
+        assertEq(closedProposals[0].id, expiredProposal2); // Newest first
+        assertEq(closedProposals[1].id, expiredProposal1);
+    }
+
+    function test_GetOpenProposalsByAuthor_Success() public {
+        // Alice creates 2 open proposals and 1 that will expire
+        vm.prank(alice);
+        uint256 aliceOpen1 = ballotBox.createProposal(
+            "Alice Open 1", VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE
+        );
+
+        uint32 pastDeadline = uint32(block.timestamp + 1 hours);
+        vm.prank(alice);
+        uint256 aliceExpired = ballotBox.createProposal(
+            "Alice Expired", VALID_DESCRIPTION, VALID_DETAILS_HASH, pastDeadline
+        );
+
+        vm.prank(alice);
+        uint256 aliceOpen2 = ballotBox.createProposal(
+            "Alice Open 2", VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE
+        );
+
+        // Bob creates one open proposal
+        vm.prank(bob);
+        ballotBox.createProposal("Bob Open", VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
+
+        // Fast forward to expire Alice's middle proposal
+        vm.warp(pastDeadline + 1);
+
+        // Get Alice's open proposals
+        BallotBox.Proposal[] memory aliceOpenProposals = ballotBox.getOpenProposalsByAuthor(alice, 0, 10);
+
+        // Should return only Alice's 2 open proposals
+        assertEq(aliceOpenProposals.length, 2);
+        assertEq(aliceOpenProposals[0].id, aliceOpen2); // Newest first
+        assertEq(aliceOpenProposals[1].id, aliceOpen1);
+        assertEq(aliceOpenProposals[0].author, alice);
+        assertEq(aliceOpenProposals[1].author, alice);
+    }
+
+    function test_GetClosedProposalsByAuthor_Success() public {
+        // Create proposals that will expire
+        uint32 pastDeadline = uint32(block.timestamp + 1 hours);
+
+        vm.prank(alice);
+        uint256 aliceExpired1 = ballotBox.createProposal(
+            "Alice Expired 1", VALID_DESCRIPTION, VALID_DETAILS_HASH, pastDeadline
+        );
+
+        vm.prank(alice);
+        ballotBox.createProposal("Alice Open", VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
+
+        vm.prank(alice);
+        uint256 aliceExpired2 = ballotBox.createProposal(
+            "Alice Expired 2", VALID_DESCRIPTION, VALID_DETAILS_HASH, pastDeadline
+        );
+
+        // Fast forward to expire proposals
+        vm.warp(pastDeadline + 1);
+
+        // Get Alice's closed proposals
+        BallotBox.Proposal[] memory aliceClosedProposals = ballotBox.getClosedProposalsByAuthor(alice, 0, 10);
+
+        // Should return only Alice's 2 expired proposals
+        assertEq(aliceClosedProposals.length, 2);
+        assertEq(aliceClosedProposals[0].id, aliceExpired2); // Newest first
+        assertEq(aliceClosedProposals[1].id, aliceExpired1);
+    }
+
+    function test_ProposalCounts_Accuracy() public {
+        // Create a mix of proposals
+        vm.prank(alice);
+        ballotBox.createProposal("Alice Open", VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
+
+        uint32 pastDeadline = uint32(block.timestamp + 1 hours);
+        vm.prank(alice);
+        ballotBox.createProposal("Alice Expired", VALID_DESCRIPTION, VALID_DETAILS_HASH, pastDeadline);
+
+        vm.prank(bob);
+        ballotBox.createProposal("Bob Open", VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
+
+        vm.prank(bob);
+        ballotBox.createProposal("Bob Expired", VALID_DESCRIPTION, VALID_DETAILS_HASH, pastDeadline);
+
+        // Before expiration - all should be open
+        assertEq(ballotBox.getOpenProposalCount(), 4);
+        assertEq(ballotBox.getClosedProposalCount(), 0);
+        assertEq(ballotBox.getOpenProposalCountByAuthor(alice), 2);
+        assertEq(ballotBox.getClosedProposalCountByAuthor(alice), 0);
+
+        // After expiration
+        vm.warp(pastDeadline + 1);
+
+        assertEq(ballotBox.getOpenProposalCount(), 2);
+        assertEq(ballotBox.getClosedProposalCount(), 2);
+        assertEq(ballotBox.getOpenProposalCountByAuthor(alice), 1);
+        assertEq(ballotBox.getClosedProposalCountByAuthor(alice), 1);
+        assertEq(ballotBox.getOpenProposalCountByAuthor(bob), 1);
+        assertEq(ballotBox.getClosedProposalCountByAuthor(bob), 1);
+    }
+
+    function test_FilteringPagination_Works() public {
+        // Create many proposals to test pagination
+        for (uint256 i = 0; i < 5; i++) {
+            vm.prank(alice);
+            ballotBox.createProposal(
+                string.concat("Open ", vm.toString(i)), VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE
+            );
+        }
+
+        uint32 pastDeadline = uint32(block.timestamp + 1 hours);
+        for (uint256 i = 0; i < 3; i++) {
+            vm.prank(alice);
+            ballotBox.createProposal(
+                string.concat("Expired ", vm.toString(i)), VALID_DESCRIPTION, VALID_DETAILS_HASH, pastDeadline
+            );
+        }
+
+        vm.warp(pastDeadline + 1);
+
+        // Test pagination with open proposals
+        BallotBox.Proposal[] memory page1 = ballotBox.getOpenProposals(0, 2);
+        assertEq(page1.length, 2);
+
+        BallotBox.Proposal[] memory page2 = ballotBox.getOpenProposals(2, 2);
+        assertEq(page2.length, 2);
+
+        BallotBox.Proposal[] memory page3 = ballotBox.getOpenProposals(4, 2);
+        assertEq(page3.length, 1); // Only 1 remaining
+
+        // Test pagination with closed proposals
+        BallotBox.Proposal[] memory closedPage1 = ballotBox.getClosedProposals(0, 2);
+        assertEq(closedPage1.length, 2);
+
+        BallotBox.Proposal[] memory closedPage2 = ballotBox.getClosedProposals(2, 2);
+        assertEq(closedPage2.length, 1); // Only 1 remaining
+    }
+
+    function test_FilteringEmptyResults() public {
+        // Test when no proposals match filter
+        BallotBox.Proposal[] memory openProposals = ballotBox.getOpenProposals(0, 10);
+        assertEq(openProposals.length, 0);
+
+        BallotBox.Proposal[] memory closedProposals = ballotBox.getClosedProposals(0, 10);
+        assertEq(closedProposals.length, 0);
+
+        // Test with non-existent author
+        address nonExistentAuthor = makeAddr("nonexistent");
+        BallotBox.Proposal[] memory authorOpen = ballotBox.getOpenProposalsByAuthor(nonExistentAuthor, 0, 10);
+        assertEq(authorOpen.length, 0);
+
+        // Test counts
+        assertEq(ballotBox.getOpenProposalCount(), 0);
+        assertEq(ballotBox.getClosedProposalCount(), 0);
+        assertEq(ballotBox.getOpenProposalCountByAuthor(alice), 0);
+    }
+
+    function test_FilteringGasOptimization() public {
+        // Create several proposals to test gas efficiency
+        vm.prank(alice);
+        ballotBox.createProposal("Open 1", VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
+
+        vm.prank(alice);
+        ballotBox.createProposal("Open 2", VALID_DESCRIPTION, VALID_DETAILS_HASH, FUTURE_DEADLINE);
+
+        uint32 pastDeadline = uint32(block.timestamp + 1 hours);
+        vm.prank(alice);
+        ballotBox.createProposal("Expired", VALID_DESCRIPTION, VALID_DETAILS_HASH, pastDeadline);
+
+        vm.warp(pastDeadline + 1);
+
+        // Measure gas for filtered queries
+        uint256 gasBefore = gasleft();
+        ballotBox.getOpenProposals(0, 10);
+        uint256 gasUsedOpen = gasBefore - gasleft();
+
+        gasBefore = gasleft();
+        ballotBox.getOpenProposalsByAuthor(alice, 0, 10);
+        uint256 gasUsedAuthorOpen = gasBefore - gasleft();
+
+        console.log("Gas used for getOpenProposals:", gasUsedOpen);
+        console.log("Gas used for getOpenProposalsByAuthor:", gasUsedAuthorOpen);
+
+        // Gas usage should be reasonable
+        assertTrue(gasUsedOpen < 200000); // Should be much less than this
+        assertTrue(gasUsedAuthorOpen < 150000); // Author filtering should be more efficient
+    }
+
     // Events to match contract events
     event ProposalCreated(
         uint256 indexed proposalId, address indexed author, string title, uint32 deadline, bytes32 detailsHash
